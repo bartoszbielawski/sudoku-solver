@@ -11,6 +11,10 @@ import string
 class sudoku:
     fullCell = set(range(1,10))
 
+    subpos   = {1: {'dy': 0, 'dx': 0}, 2: {'dy': 1, 'dx': 0}, 3: {'dy': 2, 'dx':0},
+                4: {'dy': 0, 'dx': 1}, 5: {'dy': 1, 'dx': 1}, 6: {'dy': 2, 'dx':1},
+                7: {'dy': 0, 'dx': 2}, 8: {'dy': 1, 'dx': 2}, 9: {'dy': 2, 'dx':2}}
+
     def __init__(self, initString):
         initString = initString.translate(None, " \n\t")
         print initString
@@ -98,20 +102,36 @@ class sudoku:
             self.board[sx][sy] = s;
             return;
 
+    def simpleRemove(self, x, y):
+        if not self.isCellComplete(x,y):
+            return
+        (e,) = self.get(x, y)
+        self.removeFromSquare(x, y, e);
+        self.removeFromLines(x, y, e);
 
-    def iterate(self):
+    def iterate(self, fun):
         for x in xrange(9):
             for y in xrange(9):
-                if self.isCellComplete(x,y):
-                    (e,) = self.get(x, y)
-                    self.removeFromSquare(x, y, e);
-                    self.removeFromLines(x, y, e);
-                else:
-                    self.removeHiddenSingle(x, y);
+                fun(self, x, y)
         return self.getSolvedCells()
 
     def __str__(self):
         return repr(self.board)
+
+    def prettyPrint(self):
+        result = [['#' for x in xrange(9*3 + 10)] for y in xrange(9*3 + 10)]
+        for x in xrange(9):
+            for y in xrange(9):
+                s = self.get(x, y)
+                for i in [1,2,3,4,5,6,7,8,9]:
+                    xpos = x * 4 + self.subpos[i]['dx'] + 1;
+                    ypos = y * 4 + self.subpos[i]['dy'] + 1;
+                    c = ' '
+                    if i in s:
+                        c = str(i);
+                    result[xpos][ypos] = c
+
+        return "\n".join("".join(a) for a in result)
 
     def str(self):
         result = ""
@@ -180,11 +200,18 @@ while True:
         print("h - help\ns - step\nf - print full state\nq - quit")
 
     if cmd == "s":
-        print "Solved cells:", s.iterate()
+        print "Solved cells:", s.iterate(sudoku.simpleRemove)
+        print s.str()
+
+    if cmd == "S":
+        print "Solved cells:", s.iterate(sudoku.removeHiddenSingle)
         print s.str()
 
     if cmd == "f":
         print str(s)
+
+    if cmd == "p":
+        print s.prettyPrint()
 
     if cmd == "q":
         break;
